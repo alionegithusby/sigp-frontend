@@ -1,0 +1,14 @@
+.perfis { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+.perfis__list { display: flex; flex-direction: column; gap: 8px; }
+.perfis__item { text-align: left; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); display: flex; flex-direction: column; gap: 3px; transition: border-color .12s; }
+.perfis__item:hover { border-color: var(--line-strong); }
+.perfis__item.is-active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.perfis__item strong { font-size: 14px; }
+.perfis__item small { font-size: 12px; color: var(--muted); }
+.perfis__perms { padding: 20px; }
+.perfis__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.perm { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; transition: background .12s; }
+.perm:hover { background: var(--surface-2); }
+.perm.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); font-weight: 600; }
+.perm input { width: 16px; height: 16px; accent-color: var(--accent); }
+@media (max-width: 780px) { .perfis { grid-template-columns: 1fr; } .perfis__grid { grid-template-columns: 1fr; } }

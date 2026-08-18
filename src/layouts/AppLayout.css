@@ -1,0 +1,4 @@
+.applayout { display: flex; min-height: 100vh; }
+.applayout__main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.applayout__content { flex: 1; padding: var(--s7); max-width: 1320px; width: 100%; margin: 0 auto; }
+@media (max-width: 640px) { .applayout__content { padding: var(--s5); } }

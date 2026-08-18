@@ -1,0 +1,5 @@
+.pagehead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: var(--s6); }
+.pagehead__eyebrow { display: block; margin-bottom: 6px; }
+.pagehead__desc { margin-top: 4px; max-width: 620px; }
+.pagehead__actions { display: flex; gap: 10px; flex-shrink: 0; }
+@media (max-width: 640px) { .pagehead { flex-direction: column; align-items: stretch; } }

@@ -1,0 +1,51 @@
+:root {
+  /* ===== Marca SONILS (extraída do logótipo) ===== */
+  --brand-black:        #1A1A1A;
+  --brand-yellow:       #FFD200;   /* ouro SONILS — cor de acção */
+  --brand-yellow-strong:#E8BC00;   /* hover */
+  --brand-yellow-soft:  #FFF3C4;   /* fundo suave */
+  --brand-yellow-ink:   #7A5C00;   /* dourado escuro — texto legível sobre suave */
+  --brand-red:          #E31B1B;   /* vermelho SONILS */
+
+  /* ===== Superfícies ===== */
+  --ink:        #1A1A1A;
+  --ink-soft:   #3B3B3B;
+  --muted:      #6E6E6E;
+  --muted-2:    #94938C;
+  --canvas:     #F3F3F0;   /* neutro claro, levemente quente */
+  --surface:    #FFFFFF;
+  --surface-2:  #F8F7F3;
+  --line:       #E7E5DF;
+  --line-strong:#CFCDC5;
+
+  /* Superfícies escuras (chrome) */
+  --dark-900:   #161616;
+  --dark-800:   #202020;
+  --dark-700:   #2B2B2B;
+
+  /* ===== Acção — amarelo onde assenta texto PRETO ===== */
+  --accent:        var(--brand-yellow);
+  --accent-strong: var(--brand-yellow-strong);
+  --accent-soft:   var(--brand-yellow-soft);
+  --accent-ink:    #1A1A1A;         /* texto SOBRE o amarelo */
+
+  /* ===== Semáforo — verde distinto; âmbar e vermelho harmonizam ===== */
+  --verde:    #2E9E5B;  --verde-bg:    #E6F4EC;
+  --amarelo:  #D69200;  --amarelo-bg:  #FBEFCF;   /* âmbar de alerta (mais escuro que o ouro-marca) */
+  --vermelho: #E31B1B;  --vermelho-bg: #FCE6E6;
+
+  /* ===== Tipografia ===== */
+  --font-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --font-body:    "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono:    "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+  /* ===== Forma ===== */
+  --radius: 10px; --radius-sm: 7px; --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(26,26,26,.06), 0 1px 3px rgba(26,26,26,.05);
+  --shadow-md: 0 6px 22px rgba(26,26,26,.09);
+  --shadow-lg: 0 18px 48px rgba(26,26,26,.18);
+
+  /* ===== Layout ===== */
+  --sidebar-w: 244px; --sidebar-w-collapsed: 74px; --topbar-h: 64px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s7:32px; --s8:40px; --s9:56px;
+}

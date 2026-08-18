@@ -1,0 +1,19 @@
+.authlayout { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
+.authlayout__brand {
+  background:
+    radial-gradient(120% 80% at 0% 0%, #2a2a2a 0%, transparent 55%),
+    linear-gradient(160deg, #1f1f1f, #0d0d0d);
+  color: #fff; padding: var(--s9); display: flex; flex-direction: column; justify-content: center; gap: 14px;
+  position: relative; overflow: hidden;
+}
+.authlayout__brand::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px;
+  background: linear-gradient(90deg, var(--brand-yellow) 0 60%, var(--brand-red) 60% 100%);
+}
+.authlayout__logo { width: 76px; height: 76px; object-fit: contain; margin-bottom: 6px; }
+.authlayout__title { font-family: var(--font-display); font-size: 46px; color: #fff; letter-spacing: .06em; }
+.authlayout__sub { color: #cfcfca; font-size: 15px; max-width: 320px; }
+.authlayout__org { font-family: var(--font-mono); font-size: 12px; letter-spacing: .24em; color: var(--brand-yellow); margin-top: 4px; font-weight: 600; }
+.authlayout__tag { color: #9a9a92; font-size: 13.5px; max-width: 360px; margin-top: 20px; border-left: 2px solid var(--brand-yellow); padding-left: 14px; }
+.authlayout__panel { display: flex; align-items: center; justify-content: center; padding: var(--s7); background: var(--canvas); }
+@media (max-width: 860px) { .authlayout { grid-template-columns: 1fr; } .authlayout__brand { display: none; } }

@@ -1,0 +1,17 @@
+.semaforo { display: inline-flex; align-items: center; gap: 8px; }
+.semaforo__lights {
+  display: inline-flex; gap: 3px; padding: 3px;
+  background: var(--dark-900); border-radius: 999px;
+}
+.semaforo__light {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #2c3d47; transition: box-shadow .2s;
+}
+.semaforo--lg .semaforo__light { width: 12px; height: 12px; }
+.light--VERMELHO.is-on { background: var(--vermelho); box-shadow: 0 0 8px var(--vermelho); }
+.light--AMARELO.is-on  { background: var(--amarelo);  box-shadow: 0 0 8px var(--amarelo); }
+.light--VERDE.is-on    { background: var(--verde);    box-shadow: 0 0 8px var(--verde); }
+.semaforo__label { font-size: 12px; font-weight: 600; }
+.label--VERMELHO { color: var(--vermelho); }
+.label--AMARELO  { color: var(--amarelo); }
+.label--VERDE    { color: var(--verde); }

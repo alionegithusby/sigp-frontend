@@ -1,0 +1,13 @@
+.modal__overlay {
+  position: fixed; inset: 0; background: rgba(14,36,48,.45);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 8vh 20px 20px; z-index: 200; animation: fade .15s ease;
+}
+.modal { width: 100%; box-shadow: var(--shadow-lg); animation: pop .16s ease; }
+.modal__head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.modal__close { color: var(--muted); width: 30px; height: 30px; border-radius: var(--radius-sm); display: grid; place-items: center; }
+.modal__close:hover { background: var(--surface-2); color: var(--ink); }
+.modal__body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.modal__foot { padding: 16px 22px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 10px; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
