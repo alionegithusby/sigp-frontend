@@ -18,11 +18,14 @@ export default function ProjectsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isOwner = user.perfil === PERFIS.PROJECT_OWNER;
+  const isAdmin = user.perfil === PERFIS.ADMIN;
+  const veTudo = isOwner || isAdmin;
 
   // Gestor vê apenas os projectos que lhe estão atribuídos (CSU-GP01);
-  // Project Owner vê o portefólio completo (CSU-PO02).
+  // Project Owner e Administrador SIG vêem o portefólio completo (CSU-PO02
+  // e visibilidade total do Admin sobre as entidades do sistema).
   const { data, loading, error } = useFetch(
-    () => projectRepository.list(isOwner ? undefined : (p) => p.gestorId === user.id),
+    () => projectRepository.list(veTudo ? undefined : (p) => p.gestorId === user.id),
     [user.id]
   );
   if (loading) return <Loader />;
@@ -41,9 +44,9 @@ export default function ProjectsPage() {
   return (
     <>
       <PageHeader
-        eyebrow={isOwner ? "Portefólio" : "Os meus projectos"}
+        eyebrow={veTudo ? "Portefólio" : "Os meus projectos"}
         title="Projectos"
-        description={isOwner
+        description={veTudo
           ? "Todos os projectos da carteira, com fase, progresso e semáforo de saúde."
           : "Projectos sob a sua responsabilidade operacional."}
         actions={isOwner

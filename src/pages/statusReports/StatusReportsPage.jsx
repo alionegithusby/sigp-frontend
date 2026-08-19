@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { statusReportRepository, projectRepository } from "../../services/repositories";
-import { formatDate } from "../../utils/format";
+import { PERFIS } from "../../constants/roles";
+import { useAuth } from "../../hooks/useAuth";
+import { formatDate, formatWeek } from "../../utils/format";
 import PageHeader from "../../components/layout/PageHeader";
 import Table from "../../components/data/Table";
 import Button from "../../components/ui/Button";
@@ -11,6 +13,8 @@ import ErrorState from "../../components/feedback/ErrorState";
 import Icon from "../../components/ui/Icon";
 
 export default function StatusReportsPage() {
+  const { hasRole } = useAuth();
+  const podeGerir = hasRole([PERFIS.GESTOR]);
   const [rows, setRows] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +35,7 @@ export default function StatusReportsPage() {
 
   const columns = [
     { key: "projetoId", header: "Projecto", render: (r) => <strong>{proj(r.projetoId)}</strong> },
-    { key: "semana", header: "Semana", render: (r) => <span className="mono">{r.semana}</span> },
+    { key: "semana", header: "Semana", render: (r) => <span className="mono">{formatWeek(r.semana)}</span> },
     { key: "resumo", header: "Resumo" },
     { key: "progresso", header: "Progresso", align: "right", render: (r) => <span className="mono">{r.progresso}%</span> },
     { key: "semaforo", header: "Semáforo", render: (r) => <SemaphoreBadge value={r.semaforo} /> },
@@ -43,7 +47,7 @@ export default function StatusReportsPage() {
       <PageHeader
         eyebrow="Operação" title="Status Reports"
         description="Relatório semanal obrigatório para todo projecto em execução (RN03), com semáforo e progresso acumulado."
-        actions={<Button icon={<Icon name="plus" size={16} />} onClick={() => setOpen(true)}>Registar Status Report</Button>}
+        actions={podeGerir && <Button icon={<Icon name="plus" size={16} />} onClick={() => setOpen(true)}>Registar Status Report</Button>}
       />
       <Table columns={columns} rows={rows} />
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { taskRepository, projectRepository, changeRequestRepository } from "../../services/repositories";
+import { PERFIS } from "../../constants/roles";
+import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../context/ToastContext";
 import { formatDate, formatAOA } from "../../utils/format";
 import PageHeader from "../../components/layout/PageHeader";
@@ -11,6 +13,8 @@ import ErrorState from "../../components/feedback/ErrorState";
 
 export default function ValidationsPage() {
   const { push } = useToast();
+  const { hasRole } = useAuth();
+  const podeAprovar = hasRole([PERFIS.PROJECT_OWNER]);
   const [changes, setChanges] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -62,7 +66,7 @@ export default function ValidationsPage() {
         </small>
       </span>
     ) },
-    { key: "acao", header: "", align: "right", render: (r) => (
+    { key: "acao", header: "", align: "right", render: (r) => podeAprovar && (
       <span style={{ display: "inline-flex", gap: 8 }}>
         <Button size="sm" variant="secondary" onClick={() => decidir(r, false)}>Rejeitar</Button>
         <Button size="sm" onClick={() => decidir(r, true)}>Aprovar</Button>
@@ -74,7 +78,7 @@ export default function ValidationsPage() {
     { key: "nome", header: "Tarefa concluída", render: (r) => <strong>{r.nome}</strong> },
     { key: "projetoId", header: "Projecto", render: (r) => proj(r.projetoId) },
     { key: "dataFim", header: "Concluída em", render: (r) => <span className="mono">{formatDate(r.dataFim)}</span> },
-    { key: "acao", header: "", align: "right", render: (r) => <Button size="sm" onClick={() => validarTarefa(r)}>Validar Conclusão</Button> },
+    { key: "acao", header: "", align: "right", render: (r) => podeAprovar && <Button size="sm" onClick={() => validarTarefa(r)}>Validar Conclusão</Button> },
   ];
 
   return (

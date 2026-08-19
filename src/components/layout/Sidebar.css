@@ -27,3 +27,13 @@
   background: var(--brand-yellow); border-radius: 0 3px 3px 0;
 }
 .sidebar--collapsed .sidebar__link { justify-content: center; }
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed; left: 0; top: 0; z-index: 40; width: 260px;
+    transform: translateX(-100%); transition: transform .2s ease;
+  }
+  .sidebar--collapsed { width: 260px; }
+  .sidebar--collapsed .sidebar__link { justify-content: flex-start; }
+  .sidebar--mobile-open { transform: translateX(0); }
+}

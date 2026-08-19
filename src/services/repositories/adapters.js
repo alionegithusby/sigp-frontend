@@ -13,6 +13,11 @@
 // >>> Se algum campo do teu PocketBase tiver outro nome, ajusta AQUI (um só sítio). <<<
 // ============================================================================
 import { pb } from "../http/pocketbase";
+import { POCKETBASE_URL } from "../config";
+
+// URL de download de um ficheiro anexado a um registo do PocketBase.
+const fileUrl = (collection, recordId, filename) =>
+  filename ? `${POCKETBASE_URL}/api/files/${collection}/${recordId}/${filename}` : "";
 
 const norm = (s) =>
   String(s ?? "")
@@ -106,6 +111,7 @@ export const adapters = {
       perfil: perfilToCode(r.expand?.perfil?.name || r.perfil),
       estado: up(first(r.estado, "ativo")),
       criadoEm: dateOf(r.created),
+      ultimoLogin: dateOf(r.lastLogin),
     }),
     toPB: (d) => ({ ...d }),
   },
@@ -195,7 +201,7 @@ export const adapters = {
   },
 
   custos: {
-    expand: "projeto,registadoPor",
+    expand: "projeto,registadoPor,aprovadoPor",
     entidade: "Custo",
     toUI: (r) => ({
       id: r.id,
@@ -204,20 +210,27 @@ export const adapters = {
       valor: Number(first(r.valor, 0)),
       dataGasto: dateOf(r.dataGasto, r.data),
       documento: first(r.documentoSuporte, r.documento, ""),
+      documentoUrl: r.documentoSuporte ? fileUrl("Custo", r.id, r.documentoSuporte) : "",
+      estado: up(first(r.estado, "pendente_aprovacao")),
+      registadoPorId: first(r.registadoPor, ""),
+      aprovadoPorId: first(r.aprovadoPor, ""),
     }),
     toPB: (d) => {
       const out = { ...d };
       if (d.projetoId !== undefined) { out.projeto = d.projetoId; delete out.projetoId; }
       if (d.tipo !== undefined) { out.categoriaCusto = d.tipo; delete out.tipo; }
       if (d.documento !== undefined) { out.documentoSuporte = d.documento; delete out.documento; }
+      if (d.aprovadoPorId !== undefined) { out.aprovadoPor = d.aprovadoPorId; delete out.aprovadoPorId; }
+      if (d.registadoPorId !== undefined) delete out.registadoPorId;
+      if (d.estado !== undefined) out.estado = String(d.estado).toLowerCase();
       out.tipoCusto = "real"; // custos registados na app são sempre custo real (AC)
-      out.registadoPor = d.registadoPor || currentUserId();
+      if (d.registadoPor === undefined) out.registadoPor = currentUserId();
       return out;
     },
   },
 
   decisoes: {
-    expand: "projeto,registadoPor",
+    expand: "projeto,registadoPor,aprovadoPor",
     entidade: "Decisao",
     toUI: (r) => ({
       id: r.id,
@@ -226,12 +239,18 @@ export const adapters = {
       dataDecisao: dateOf(r.dataDecisao, r.data),
       participantes: first(r.participantes, ""),
       nivelImpacto: up(first(r.nivelImpacto, "medio")),
+      estado: up(first(r.estado, "pendente_aprovacao")),
+      registadoPorId: first(r.registadoPor, ""),
+      aprovadoPorId: first(r.aprovadoPor, ""),
     }),
     toPB: (d) => {
       const out = { ...d };
       if (d.projetoId !== undefined) { out.projeto = d.projetoId; delete out.projetoId; }
       if (d.nivelImpacto !== undefined) out.nivelImpacto = norm(d.nivelImpacto);
-      out.registadoPor = d.registadoPor || currentUserId();
+      if (d.aprovadoPorId !== undefined) { out.aprovadoPor = d.aprovadoPorId; delete out.aprovadoPorId; }
+      if (d.registadoPorId !== undefined) delete out.registadoPorId;
+      if (d.estado !== undefined) out.estado = String(d.estado).toLowerCase();
+      if (d.registadoPor === undefined) out.registadoPor = currentUserId();
       return out;
     },
   },
@@ -249,6 +268,7 @@ export const adapters = {
       estado: ocorrenciaEstadoToUI(r.estado),
       ehRetrabalho: Boolean(first(r.classificacaoRetrabalho, r.ehRetrabalho, false)),
       ocorrenciaAnteriorId: first(r.ocorrenciaOrigem, r.ocorrenciaAnteriorId) || null,
+      registadoPorId: first(r.registadoPor, ""),
       data: dateOf(r.dataRegisto, r.data, r.created),
     }),
     toPB: (d) => {
@@ -336,7 +356,7 @@ export const adapters = {
   },
   tipos_projeto: {
     entidade: "TipoProjeto",
-    toUI: (r) => ({ id: r.id, nome: r.nome }),
+    toUI: (r) => ({ id: r.id, nome: r.nome, ativo: norm(r.estado) !== "inativo" }),
     toPB: (d) => ({ ...d }),
   },
   fases_projeto: {

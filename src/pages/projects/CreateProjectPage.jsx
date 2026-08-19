@@ -28,7 +28,7 @@ export default function CreateProjectPage() {
   useEffect(() => {
     userRepository.list((u) => u.perfil === PERFIS.GESTOR && u.estado === "ATIVO")
       .then((g) => { setGestores(g); setForm((f) => ({ ...f, gestorId: g[0]?.id || "" })); });
-    tipoProjetoRepository.list()
+    tipoProjetoRepository.list((t) => t.ativo)
       .then((t) => { setTipos(t); setForm((f) => ({ ...f, tipo: t[0]?.nome || "" })); });
   }, []);
 

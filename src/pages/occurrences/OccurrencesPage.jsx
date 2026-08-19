@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFetch } from "../../hooks/useFetch";
+import { useAuth } from "../../hooks/useAuth";
 import { occurrenceRepository, projectRepository, categoriaCausaRepository, taskRepository } from "../../services/repositories";
 import { ESTADO_OCORRENCIA, GRAVIDADE } from "../../constants/enums";
+import { PERFIS } from "../../constants/roles";
 import { formatDate } from "../../utils/format";
 import { useToast } from "../../context/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
@@ -18,11 +20,13 @@ import Icon from "../../components/ui/Icon";
 
 const estadoTone = { PENDENTE: "vermelho", EM_MITIGACAO: "amarelo", ENCERRADA: "verde" };
 const gravTone = { CRITICA: "vermelho", ALTA: "vermelho", MEDIA: "amarelo", BAIXA: "neutral" };
-const EMPTY_FORM = { projetoId: "", tarefaId: "", descricao: "", categoriaCausaId: "", gravidade: "MEDIA" };
+const EMPTY_FORM = { projetoId: "", tarefaId: "", descricao: "", categoriaCausaId: "", gravidade: "MEDIA", ocorrenciaAnteriorId: "" };
 
 export default function OccurrencesPage() {
   const navigate = useNavigate();
   const { push } = useToast();
+  const { hasRole } = useAuth();
+  const podeGerir = hasRole([PERFIS.GESTOR]);
   const { data, loading, error } = useFetch(() => occurrenceRepository.list(), []);
   const { data: projects } = useFetch(() => projectRepository.list(), []);
   const { data: categorias } = useFetch(() => categoriaCausaRepository.list(), []);
@@ -40,8 +44,10 @@ export default function OccurrencesPage() {
   const origem = (r) => (list || []).find((o) => o.id === r.ocorrenciaAnteriorId);
   const irParaOrigem = (r) => { const o = origem(r); if (o) navigate(`/projects/${o.projetoId}`); };
 
+  const categoriasAtivas = (categorias || []).filter((c) => c.ativo);
+
   const abrir = () => {
-    setForm({ ...EMPTY_FORM, projetoId: projects?.[0]?.id || "", categoriaCausaId: categorias?.[0]?.id || "" });
+    setForm({ ...EMPTY_FORM, projetoId: projects?.[0]?.id || "", categoriaCausaId: categoriasAtivas[0]?.id || "" });
     setOpen(true);
   };
 
@@ -49,12 +55,16 @@ export default function OccurrencesPage() {
     if (!form.projetoId || !form.descricao || !form.categoriaCausaId)
       return push("Preencha projecto, descrição e categoria de causa.", "error");
     const rec = await occurrenceRepository.create({
-      ...form, estado: "PENDENTE", ehRetrabalho: false, data: new Date().toISOString().slice(0, 10),
+      ...form, estado: "PENDENTE",
+      ehRetrabalho: !!form.ocorrenciaAnteriorId, // RN10: associar uma ocorrência anterior classifica automaticamente como potencial retrabalho
+      data: new Date().toISOString().slice(0, 10),
     });
     setRows([rec, ...list]);
     setOpen(false);
-    push("Ocorrência registada.");
+    push(form.ocorrenciaAnteriorId ? "Ocorrência registada e classificada como potencial retrabalho." : "Ocorrência registada.");
   };
+
+  const anteriorSelecionada = (list || []).find((o) => o.id === form.ocorrenciaAnteriorId);
 
   const columns = [
     { key: "descricao", header: "Ocorrência", render: (r) => (
@@ -81,7 +91,7 @@ export default function OccurrencesPage() {
       <PageHeader
         eyebrow="Controlo de qualidade" title="Ocorrências"
         description="Incidentes por projecto e tarefa (RN07/RN08). Uma ocorrência que reaparece pela mesma causa é retrabalho (RN10)."
-        actions={<Button icon={<Icon name="plus" size={16} />} onClick={abrir}>Nova Ocorrência</Button>}
+        actions={podeGerir && <Button icon={<Icon name="plus" size={16} />} onClick={abrir}>Nova Ocorrência</Button>}
       />
       <Table columns={columns} rows={list} />
 
@@ -92,12 +102,22 @@ export default function OccurrencesPage() {
         <Textarea label="Descrição" rows={3} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
         <div className="grid grid-2" style={{ gap: 16 }}>
           <Select label="Categoria de causa" value={form.categoriaCausaId} onChange={(e) => setForm({ ...form, categoriaCausaId: e.target.value })}
-            options={(categorias || []).map((c) => ({ value: c.id, label: c.nome }))} />
+            options={categoriasAtivas.map((c) => ({ value: c.id, label: c.nome }))} />
           <Select label="Gravidade" value={form.gravidade} onChange={(e) => setForm({ ...form, gravidade: e.target.value })}
             options={Object.entries(GRAVIDADE).map(([value, label]) => ({ value, label }))} />
         </div>
         <Select label="Tarefa (opcional)" value={form.tarefaId} onChange={(e) => setForm({ ...form, tarefaId: e.target.value })}
           options={[{ value: "", label: "Sem tarefa associada" }, ...(tasks || []).filter((t) => t.projetoId === form.projetoId).map((t) => ({ value: t.id, label: t.nome }))]} />
+        <Select label="Ocorrência anterior (opcional)" value={form.ocorrenciaAnteriorId}
+          onChange={(e) => setForm({ ...form, ocorrenciaAnteriorId: e.target.value })}
+          options={[{ value: "", label: "Nenhuma — ocorrência nova" }, ...(list || []).filter((o) => o.projetoId === form.projetoId).map((o) => ({ value: o.id, label: o.descricao }))]} />
+        {anteriorSelecionada && (
+          <div className="card muted" style={{ padding: 14, fontSize: 13 }}>
+            <strong style={{ color: "var(--ink)" }}>Confirma a origem:</strong> {anteriorSelecionada.descricao}<br />
+            Causa: {cat(anteriorSelecionada.categoriaCausaId)} · Gravidade: {GRAVIDADE[anteriorSelecionada.gravidade]} · Estado: {ESTADO_OCORRENCIA[anteriorSelecionada.estado]}
+            <br />Esta nova ocorrência será classificada automaticamente como <strong>potencial retrabalho</strong>.
+          </div>
+        )}
       </Modal>
     </>
   );

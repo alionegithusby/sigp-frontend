@@ -31,6 +31,8 @@ export const authRepository = {
       pb.authStore.clear();
       throw new Error("Perfil de utilizador não reconhecido. Contacte o Administrador SIG.");
     }
+    // Best-effort — não deve impedir o login se falhar.
+    pb.collection("users").update(auth.record.id, { lastLogin: new Date().toISOString() }).catch(() => {});
     return user;
   },
   logout: async () => {
@@ -39,4 +41,11 @@ export const authRepository = {
   },
   // Sessão persistida (pb.authStore restaura do localStorage).
   current: () => (pb.authStore.isValid && pb.authStore.record ? toAuthUser(pb.authStore.record) : null),
+  // O próprio utilizador altera a sua password — o PocketBase exige a
+  // password actual (oldPassword) para qualquer alteração feita por uma
+  // conta normal (não-superuser, fora do manageRule do Administrador).
+  changePassword: async (id, oldPassword, password, passwordConfirm) => {
+    await pb.collection("users").update(id, { oldPassword, password, passwordConfirm });
+    return true;
+  },
 };

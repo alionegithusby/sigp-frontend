@@ -14,6 +14,23 @@ export const formatDate = (iso) =>
     ? new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso))
     : "—";
 
+// Data + hora amigável, ex.: "18/08/2026 22:10" — para auditoria, último login, etc.
+export const formatDateTime = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
+};
+
+// "2026-W34" -> "Semana 34 - 2026"
+export const formatWeek = (weekStr) => {
+  const m = /^(\d{4})-W(\d{2})$/.exec(String(weekStr ?? ""));
+  return m ? `Semana ${Number(m[2])} - ${m[1]}` : (weekStr || "—");
+};
+
 export const initials = (nome = "") =>
   nome.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 

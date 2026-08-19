@@ -52,6 +52,9 @@ export default function LoginPage() {
         />
         {error && <div className="login__error">{error}</div>}
         <Button size="lg" loading={loading} onClick={handleLogin}>Entrar</Button>
+        <p className="muted" style={{ fontSize: 12.5, textAlign: "center", marginTop: 4 }}>
+          Esqueceu a password? Contacte o Administrador SIG para a redefinir.
+        </p>
       </div>
 
       <div className="login__demo">

@@ -1,6 +1,20 @@
 import { pb } from "../http/pocketbase";
 import { logAudit } from "../http/audit";
 
+// Se o payload tiver um File/Blob (upload de documento), o PocketBase precisa
+// de multipart/form-data em vez de JSON — convertemos automaticamente para
+// que as telas continuem a chamar repository.create(...) exactamente da
+// mesma forma, com ou sem ficheiro.
+function toBody(payload) {
+  const hasFile = Object.values(payload).some((v) => v instanceof File || v instanceof Blob);
+  if (!hasFile) return payload;
+  const fd = new FormData();
+  Object.entries(payload).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) fd.append(k, v);
+  });
+  return fd;
+}
+
 /**
  * Fábrica de repositórios — apenas PocketBase (sem mock).
  * As telas continuam a chamar list/getById/create/update/remove e recebem
@@ -22,13 +36,13 @@ export function createRepository(collection, adapter = {}) {
     },
     getById: async (id) => toUI(await pb.collection(collection).getOne(id, opts)),
     create: async (data) => {
-      const rec = await pb.collection(collection).create(await toPB(data), opts);
+      const rec = await pb.collection(collection).create(toBody(await toPB(data)), opts);
       const ui = toUI(rec);
       if (collection !== "LogAuditoria") logAudit("criar", entidade, ui, rec.id);
       return ui;
     },
     update: async (id, data) => {
-      const rec = await pb.collection(collection).update(id, await toPB(data), opts);
+      const rec = await pb.collection(collection).update(id, toBody(await toPB(data)), opts);
       const ui = toUI(rec);
       if (collection !== "LogAuditoria") logAudit("editar", entidade, ui, rec.id);
       return ui;

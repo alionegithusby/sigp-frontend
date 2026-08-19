@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { auditRepository, userRepository } from "../../services/repositories";
+import { formatDateTime } from "../../utils/format";
 import PageHeader from "../../components/layout/PageHeader";
 import Table from "../../components/data/Table";
 import Select from "../../components/ui/Select";
@@ -30,7 +31,7 @@ export default function AuditPage() {
   const filtered = logs.filter((l) => (!fUser || l.utilizadorId === fUser) && (!fAcao || l.acao === fAcao));
 
   const columns = [
-    { key: "data", header: "Data / Hora", render: (r) => <span className="mono">{r.data}</span> },
+    { key: "data", header: "Data / Hora", render: (r) => <span className="mono">{formatDateTime(r.data)}</span> },
     { key: "utilizadorId", header: "Utilizador", render: (r) => nome(r.utilizadorId) },
     { key: "acao", header: "Acção", render: (r) => <Badge tone={acaoTone[r.acao] || "neutral"}>{r.acao}</Badge> },
     { key: "entidade", header: "Entidade" },

@@ -12,8 +12,8 @@ import { PERFIS } from "../../constants/roles";
 import {
   FASES, ESTADO_TAREFA, ESTADO_OCORRENCIA, PRIORIDADE, NIVEL_IMPACTO,
 } from "../../constants/enums";
-import { computeEVM, evmSemaforo } from "../../utils/evm";
-import { formatAOA, formatDate, formatNumber } from "../../utils/format";
+import { computeEVM, evmSemaforo, EVM_GLOSSARY } from "../../utils/evm";
+import { formatAOA, formatDate, formatNumber, formatWeek } from "../../utils/format";
 import PageHeader from "../../components/layout/PageHeader";
 import Table from "../../components/data/Table";
 import Badge from "../../components/ui/Badge";
@@ -69,7 +69,9 @@ export default function ProjectDetailPage() {
         description={`${FASES[project.fase]} · ${project.tipo} · ${project.cliente}`}
         actions={
           <>
-            <Button variant="secondary" icon={<Icon name="report" size={16} />} onClick={() => setSrOpen(true)}>Status Report</Button>
+            {hasRole([PERFIS.GESTOR, PERFIS.PROJECT_OWNER]) && (
+              <Button variant="secondary" icon={<Icon name="report" size={16} />} onClick={() => setSrOpen(true)}>Status Report</Button>
+            )}
             {hasRole([PERFIS.GESTOR]) && (
               <Button variant="secondary" icon={<Icon name="decisions" size={16} />} onClick={() => setCrOpen(true)}>Solicitar Alteração</Button>
             )}
@@ -90,11 +92,13 @@ export default function ProjectDetailPage() {
       </div>
 
       {evm && (
-        <section className="grid grid-4" style={{ marginBottom: 24 }}>
-          <KpiCard label="CPI" value={formatNumber(evm.cpi)} tone={evmSemaforo(evm.cpi).toLowerCase()} hint="custo" />
-          <KpiCard label="SPI" value={formatNumber(evm.spi)} tone={evmSemaforo(evm.spi).toLowerCase()} hint="prazo" />
+        <section className="grid grid-3" style={{ marginBottom: 24 }}>
+          <KpiCard label="CPI" value={formatNumber(evm.cpi)} tone={evmSemaforo(evm.cpi).toLowerCase()} hint="custo" title={EVM_GLOSSARY.CPI} />
+          <KpiCard label="SPI" value={formatNumber(evm.spi)} tone={evmSemaforo(evm.spi).toLowerCase()} hint="prazo" title={EVM_GLOSSARY.SPI} />
           <KpiCard label="Progresso" value={`${project.progresso}%`} tone="accent" />
-          <KpiCard label="Orçamento" value={formatAOA(project.orcamentoPlaneado)} hint={`AC ${formatAOA(evm.AC)}`} />
+          <KpiCard label="Orçamento (BAC)" value={formatAOA(evm.BAC)} hint={`AC ${formatAOA(evm.AC)}`} title={EVM_GLOSSARY.BAC} />
+          <KpiCard label="EAC" value={formatAOA(evm.eac)} tone={evm.eac > evm.BAC ? "vermelho" : "verde"} hint="previsão final" title={EVM_GLOSSARY.EAC} />
+          <KpiCard label="CV" value={formatAOA(evm.cv)} tone={evm.cv >= 0 ? "verde" : "vermelho"} hint="variação de custo" title={EVM_GLOSSARY.CV} />
         </section>
       )}
 
@@ -146,7 +150,7 @@ export default function ProjectDetailPage() {
           <Table rowKey="id" rows={reports || []}
             empty={<Empty>Sem status reports registados.</Empty>}
             columns={[
-              { key: "semana", header: "Semana", render: (r) => <span className="mono">{r.semana}</span> },
+              { key: "semana", header: "Semana", render: (r) => <span className="mono">{formatWeek(r.semana)}</span> },
               { key: "resumo", header: "Resumo" },
               { key: "progresso", header: "Progresso", align: "right", render: (r) => <span className="mono">{r.progresso}%</span> },
               { key: "semaforo", header: "Semáforo", render: (r) => <SemaphoreBadge value={r.semaforo} /> },
@@ -161,7 +165,8 @@ export default function ProjectDetailPage() {
               { key: "tipo", header: "Tipo", render: (r) => <Badge>{r.tipo}</Badge> },
               { key: "valor", header: "Valor", align: "right", render: (r) => <span className="mono">{formatAOA(r.valor)}</span> },
               { key: "dataGasto", header: "Data", render: (r) => <span className="mono">{formatDate(r.dataGasto)}</span> },
-              { key: "documento", header: "Documento", render: (r) => r.documento || "—" },
+              { key: "estado", header: "Estado", render: (r) => <Badge tone={r.estado === "APROVADO" ? "verde" : r.estado === "REJEITADO" ? "vermelho" : "amarelo"}>{r.estado === "APROVADO" ? "Aprovado" : r.estado === "REJEITADO" ? "Rejeitado" : "Pendente"}</Badge> },
+              { key: "documento", header: "Documento", render: (r) => r.documentoUrl ? <a href={r.documentoUrl} target="_blank" rel="noreferrer">Descarregar</a> : "—" },
             ]} />
         )}
 
@@ -172,6 +177,7 @@ export default function ProjectDetailPage() {
               { key: "descricao", header: "Decisão", render: (r) => <strong>{r.descricao}</strong> },
               { key: "participantes", header: "Participantes" },
               { key: "nivelImpacto", header: "Impacto", render: (r) => <Badge tone={r.nivelImpacto === "ALTO" ? "vermelho" : r.nivelImpacto === "MEDIO" ? "amarelo" : "neutral"}>{NIVEL_IMPACTO[r.nivelImpacto]}</Badge> },
+              { key: "estado", header: "Estado", render: (r) => <Badge tone={r.estado === "APROVADO" ? "verde" : r.estado === "REJEITADO" ? "vermelho" : "amarelo"}>{r.estado === "APROVADO" ? "Aprovada" : r.estado === "REJEITADO" ? "Rejeitada" : "Pendente"}</Badge> },
               { key: "dataDecisao", header: "Data", align: "right", render: (r) => <span className="mono">{formatDate(r.dataDecisao)}</span> },
             ]} />
         )}
@@ -193,11 +199,6 @@ export default function ProjectDetailPage() {
         .tab { padding: 10px 14px; font-size: 13.5px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
         .tab:hover { color: var(--ink); }
         .tab.is-active { color: var(--ink); border-bottom-color: var(--brand-yellow); }
-        .deflist { display: flex; flex-direction: column; gap: 10px; }
-        .deflist > div { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-        .deflist > div:last-child { border-bottom: none; padding-bottom: 0; }
-        .deflist dt { color: var(--muted); font-size: 13px; }
-        .deflist dd { font-weight: 600; font-size: 13.5px; text-align: right; }
       `}</style>
     </>
   );

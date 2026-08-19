@@ -48,3 +48,10 @@ h3 { font-size: 15px; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+/* Lista de definições (ficha de detalhe: rótulo à esquerda, valor à direita) */
+.deflist { display: flex; flex-direction: column; gap: 10px; }
+.deflist > div { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.deflist > div:last-child { border-bottom: none; padding-bottom: 0; }
+.deflist dt { color: var(--muted); font-size: 13px; }
+.deflist dd { font-weight: 600; font-size: 13.5px; text-align: right; }

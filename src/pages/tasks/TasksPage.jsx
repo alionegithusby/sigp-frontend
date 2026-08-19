@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useFetch } from "../../hooks/useFetch";
+import { useAuth } from "../../hooks/useAuth";
 import { taskRepository, projectRepository, userRepository } from "../../services/repositories";
 import { ESTADO_TAREFA, PRIORIDADE } from "../../constants/enums";
+import { PERFIS } from "../../constants/roles";
 import { formatDate } from "../../utils/format";
 import { useToast } from "../../context/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
@@ -22,6 +24,8 @@ const EMPTY_FORM = { projetoId: "", nome: "", responsavelId: "", prioridade: "ME
 
 export default function TasksPage() {
   const { push } = useToast();
+  const { hasRole } = useAuth();
+  const podeGerir = hasRole([PERFIS.GESTOR]);
   const { data: tasks, loading, error } = useFetch(() => taskRepository.list(), []);
   const { data: projects } = useFetch(() => projectRepository.list(), []);
   const { data: users } = useFetch(() => userRepository.list(), []);
@@ -70,7 +74,7 @@ export default function TasksPage() {
     { key: "estado", header: "Estado", render: (r) => <Badge tone={estadoTone[r.estado]}>{ESTADO_TAREFA[r.estado]}</Badge> },
     { key: "dataFim", header: "Prazo", align: "right", render: (r) => <span className="mono">{formatDate(r.dataFim)}</span> },
     { key: "acao", header: "", align: "right", render: (r) => (
-      (r.estado === "PENDENTE" || r.estado === "EM_PROGRESSO")
+      podeGerir && (r.estado === "PENDENTE" || r.estado === "EM_PROGRESSO")
         ? <Button size="sm" variant="secondary" onClick={() => avancar(r)}>{r.estado === "PENDENTE" ? "Iniciar" : "Concluir"}</Button>
         : null
     ) },
@@ -81,7 +85,7 @@ export default function TasksPage() {
       <PageHeader
         eyebrow="Execução" title="Tarefas"
         description="Tarefas de todos os projectos. Cada tarefa exige projecto e responsável (RN04)."
-        actions={<Button icon={<Icon name="plus" size={16} />} onClick={abrir}>Nova Tarefa</Button>}
+        actions={podeGerir && <Button icon={<Icon name="plus" size={16} />} onClick={abrir}>Nova Tarefa</Button>}
       />
       <Table columns={columns} rows={list} />
 

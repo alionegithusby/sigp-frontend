@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  tipoProjetoRepository, faseProjetoRepository, categoriaCausaRepository,
-} from "../../services/repositories";
+import { tipoProjetoRepository, categoriaCausaRepository } from "../../services/repositories";
 import { useToast } from "../../context/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
 import Table from "../../components/data/Table";
@@ -9,19 +7,17 @@ import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import Icon from "../../components/ui/Icon";
 
-const TABS = ["Tipos de Projecto", "Fases do Projecto", "Categorias de Causa"];
+const TABS = ["Tipos de Projecto", "Categorias de Causa"];
 
 export default function SettingsPage() {
   const { push } = useToast();
   const [tab, setTab] = useState(TABS[0]);
   const [tipos, setTipos] = useState([]);
-  const [fases, setFases] = useState([]);
   const [cats, setCats] = useState([]);
   const [novo, setNovo] = useState("");
 
   useEffect(() => {
     tipoProjetoRepository.list().then(setTipos).catch(() => push("Não foi possível carregar os tipos de projecto.", "error"));
-    faseProjetoRepository.list().then(setFases).catch(() => push("Não foi possível carregar as fases.", "error"));
     categoriaCausaRepository.list().then(setCats).catch(() => push("Não foi possível carregar as categorias de causa.", "error"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -32,9 +28,6 @@ export default function SettingsPage() {
       if (tab === TABS[0]) {
         const r = await tipoProjetoRepository.create({ nome: novo, estado: "ativo" });
         setTipos((x) => [...x, r]);
-      } else if (tab === TABS[1]) {
-        const r = await faseProjetoRepository.create({ nome: novo, ordem: fases.length + 1, estado: "ativo" });
-        setFases((x) => [...x, r]);
       } else {
         const r = await categoriaCausaRepository.create({ nome: novo, estado: "ativo" });
         setCats((x) => [...x, r]);
@@ -46,19 +39,37 @@ export default function SettingsPage() {
     }
   };
 
-  const cols = tab === TABS[1]
-    ? [{ key: "ordem", header: "Ordem", render: (r) => <span className="mono">{r.ordem}</span> }, { key: "nome", header: "Fase", render: (r) => <strong>{r.nome}</strong> }]
-    : tab === TABS[2]
-      ? [{ key: "nome", header: "Categoria", render: (r) => <strong>{r.nome}</strong> }, { key: "ativo", header: "Estado", render: (r) => <Badge tone={r.ativo ? "verde" : "neutral"}>{r.ativo ? "Activa" : "Inactiva"}</Badge> }]
-      : [{ key: "nome", header: "Tipo", render: (r) => <strong>{r.nome}</strong> }];
+  const alternarEstado = async (r) => {
+    try {
+      const novoEstado = r.ativo ? "inativo" : "ativo";
+      if (tab === TABS[0]) {
+        const rec = await tipoProjetoRepository.update(r.id, { estado: novoEstado });
+        setTipos((x) => x.map((t) => (t.id === r.id ? rec : t)));
+      } else {
+        const rec = await categoriaCausaRepository.update(r.id, { estado: novoEstado });
+        setCats((x) => x.map((c) => (c.id === r.id ? rec : c)));
+      }
+      push(r.ativo ? "Registo desactivado." : "Registo reactivado.");
+    } catch {
+      push("Não foi possível alterar o estado.", "error");
+    }
+  };
 
-  const rows = tab === TABS[0] ? tipos : tab === TABS[1] ? fases : cats;
+  const cols = [
+    { key: "nome", header: tab === TABS[0] ? "Tipo" : "Categoria", render: (r) => <strong>{r.nome}</strong> },
+    { key: "ativo", header: "Estado", render: (r) => <Badge tone={r.ativo ? "verde" : "neutral"}>{r.ativo ? "Activo" : "Inactivo"}</Badge> },
+    { key: "acao", header: "", align: "right", render: (r) => (
+      <Button size="sm" variant="secondary" onClick={() => alternarEstado(r)}>{r.ativo ? "Desactivar" : "Reactivar"}</Button>
+    ) },
+  ];
+
+  const rows = tab === TABS[0] ? tipos : cats;
 
   return (
     <>
       <PageHeader
         eyebrow="Administração" title="Dados Mestres"
-        description="Parametrização reservada ao Administrador SIG (RN14): tipos de projecto, fases do modelo G1 e categorias de causa."
+        description="Parametrização reservada ao Administrador SIG (RN14): tipos de projecto e categorias de causa. Registos desactivados deixam de estar disponíveis para selecção, mas mantêm-se nos registos existentes."
       />
       <div className="tabs">
         {TABS.map((t) => (

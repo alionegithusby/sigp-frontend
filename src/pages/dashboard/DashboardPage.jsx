@@ -8,7 +8,7 @@ import {
   statusReportRepository, taskRepository, costRepository,
 } from "../../services/repositories";
 import { deriveEvmSeries } from "../../services/derive";
-import { aggregateEVM, evmSemaforo } from "../../utils/evm";
+import { aggregateEVM, evmSemaforo, EVM_GLOSSARY } from "../../utils/evm";
 import { formatNumber, formatAOA } from "../../utils/format";
 
 import PageHeader from "../../components/layout/PageHeader";
@@ -71,7 +71,7 @@ export default function DashboardPage() {
         <KpiCard label="Projectos Activos" value={ativos.length} tone="accent" hint={`${concluidos.length} concluídos`} icon={<Icon name="projects" size={18} />} />
         {!isAdmin && <KpiCard label="Ocorrências Abertas" value={abertas.length} tone={abertas.length ? "vermelho" : "verde"} hint={`${retrabalho.length} de retrabalho`} icon={<Icon name="occurrences" size={18} />} />}
         {!isAdmin && <KpiCard label="Status Reports em Falta" value={semReport.length} tone={semReport.length ? "amarelo" : "verde"} hint="projectos activos sem report" icon={<Icon name="report" size={18} />} />}
-        {!isAdmin && <KpiCard label="Custo Real (AC)" value={formatAOA(evm.AC)} hint={`Orçado ${formatAOA(evm.PV)}`} icon={<Icon name="costs" size={18} />} />}
+        {!isAdmin && <KpiCard label="Custo Real (AC)" value={formatAOA(evm.AC)} hint={`Orçado ${formatAOA(evm.PV)}`} icon={<Icon name="costs" size={18} />} title={EVM_GLOSSARY.AC} />}
         {isAdmin && <KpiCard label="Projectos no Sistema" value={projects.length} icon={<Icon name="projects" size={18} />} />}
         {isAdmin && <KpiCard label="Ocorrências Registadas" value={occ.length} icon={<Icon name="occurrences" size={18} />} />}
       </section>
@@ -90,6 +90,8 @@ export default function DashboardPage() {
                 <Gauge label="SPI" value={formatNumber(evm.spi)} sem={evmSemaforo(evm.spi)} caption="Eficiência de prazo" />
                 <Gauge label="CV" value={formatAOA(evm.cv)} sem={evm.cv >= 0 ? "VERDE" : "VERMELHO"} caption="Variação de custo" mono={false} />
                 <Gauge label="SV" value={formatAOA(evm.sv)} sem={evm.sv >= 0 ? "VERDE" : "VERMELHO"} caption="Variação de prazo" mono={false} />
+                <Gauge label="BAC" value={formatAOA(evm.BAC)} sem="VERDE" caption="Orçamento no términus" mono={false} />
+                <Gauge label="EAC" value={formatAOA(evm.eac)} sem={evm.eac > evm.BAC ? "VERMELHO" : "VERDE"} caption="Estimativa no términus" mono={false} />
               </div>
             </div>
 
@@ -131,7 +133,7 @@ export default function DashboardPage() {
 
 function Gauge({ label, value, sem, caption, mono = true }) {
   return (
-    <div className={`gauge gauge--${sem}`}>
+    <div className={`gauge gauge--${sem}`} title={EVM_GLOSSARY[label]}>
       <span className="gauge__label">{label}</span>
       <span className={`gauge__value ${mono ? "mono" : ""}`}>{value}</span>
       <span className="gauge__caption">{caption}</span>

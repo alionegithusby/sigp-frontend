@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { decisionRepository, projectRepository } from "../../services/repositories";
 import { NIVEL_IMPACTO } from "../../constants/enums";
+import { PERFIS } from "../../constants/roles";
+import { useAuth } from "../../hooks/useAuth";
 import { formatDate } from "../../utils/format";
 import { useToast } from "../../context/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
@@ -16,9 +18,14 @@ import ErrorState from "../../components/feedback/ErrorState";
 import Icon from "../../components/ui/Icon";
 
 const impactoTone = { ALTO: "vermelho", MEDIO: "amarelo", BAIXO: "neutral" };
+const estadoTone = { PENDENTE_APROVACAO: "amarelo", APROVADO: "verde", REJEITADO: "vermelho" };
+const estadoLabel = { PENDENTE_APROVACAO: "Pendente de Aprovação", APROVADO: "Aprovado", REJEITADO: "Rejeitado" };
 
 export default function DecisionsPage() {
   const { push } = useToast();
+  const { user, hasRole } = useAuth();
+  const podeGerir = hasRole([PERFIS.GESTOR]);
+  const podeAprovar = hasRole([PERFIS.PROJECT_OWNER]);
   const [rows, setRows] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,41 +33,67 @@ export default function DecisionsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ projetoId: "", descricao: "", dataDecisao: new Date().toISOString().slice(0, 10), participantes: "", nivelImpacto: "MEDIO" });
 
-  useEffect(() => {
-    Promise.all([decisionRepository.list(), projectRepository.list()])
-      .then(([d, p]) => { setRows(d); setProjects(p); setForm((f) => ({ ...f, projetoId: p[0]?.id || "" })); })
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, []);
+  const load = () => Promise.all([decisionRepository.list(), projectRepository.list()])
+    .then(([d, p]) => { setRows(d); setProjects(p); setForm((f) => ({ ...f, projetoId: p[0]?.id || "" })); });
+
+  useEffect(() => { load().catch(setError).finally(() => setLoading(false)); }, []);
 
   const proj = (pid) => projects.find((p) => p.id === pid)?.codigo || pid;
 
   const submit = async () => {
     if (!form.projetoId || !form.descricao || !form.dataDecisao) return push("Preencha projecto, descrição e data.", "error");
-    const rec = await decisionRepository.create(form);
+    const rec = await decisionRepository.create({ ...form, estado: "PENDENTE_APROVACAO" });
     setRows((r) => [rec, ...r]);
     setOpen(false);
-    push("Decisão registada no histórico.");
+    push("Decisão registada. Aguarda aprovação do Project Owner.");
+  };
+
+  const decidir = async (decisao, aprovar) => {
+    await decisionRepository.update(decisao.id, { estado: aprovar ? "APROVADO" : "REJEITADO", aprovadoPorId: user.id });
+    await load();
+    push(aprovar ? "Decisão aprovada. Entra em vigor." : "Decisão rejeitada.");
   };
 
   if (loading) return <Loader />;
   if (error) return <ErrorState />;
+  const pendentes = rows.filter((d) => d.estado === "PENDENTE_APROVACAO");
 
   const columns = [
     { key: "descricao", header: "Decisão", render: (r) => <strong>{r.descricao}</strong> },
     { key: "projetoId", header: "Projecto", render: (r) => proj(r.projetoId) },
     { key: "participantes", header: "Participantes" },
     { key: "nivelImpacto", header: "Impacto", render: (r) => <Badge tone={impactoTone[r.nivelImpacto]}>{NIVEL_IMPACTO[r.nivelImpacto]}</Badge> },
+    { key: "estado", header: "Estado", render: (r) => <Badge tone={estadoTone[r.estado]}>{estadoLabel[r.estado] || r.estado}</Badge> },
     { key: "dataDecisao", header: "Data", align: "right", render: (r) => <span className="mono">{formatDate(r.dataDecisao)}</span> },
+  ];
+
+  const pendCols = [
+    { key: "descricao", header: "Decisão", render: (r) => <strong>{r.descricao}</strong> },
+    { key: "projetoId", header: "Projecto", render: (r) => proj(r.projetoId) },
+    { key: "nivelImpacto", header: "Impacto", render: (r) => <Badge tone={impactoTone[r.nivelImpacto]}>{NIVEL_IMPACTO[r.nivelImpacto]}</Badge> },
+    { key: "acao", header: "", align: "right", render: (r) => (
+      <span style={{ display: "inline-flex", gap: 8 }}>
+        <Button size="sm" variant="secondary" onClick={() => decidir(r, false)}>Rejeitar</Button>
+        <Button size="sm" onClick={() => decidir(r, true)}>Aprovar</Button>
+      </span>
+    ) },
   ];
 
   return (
     <>
       <PageHeader
         eyebrow="Governança" title="Decisões"
-        description="Registo formal das deliberações do comité de acompanhamento, garantindo rastreabilidade do histórico decisório (RN06)."
-        actions={<Button icon={<Icon name="plus" size={16} />} onClick={() => setOpen(true)}>Registar Decisão</Button>}
+        description="Registo formal das deliberações do comité de acompanhamento, sujeito a aprovação do Project Owner, garantindo rastreabilidade do histórico decisório (RN06)."
+        actions={podeGerir && <Button icon={<Icon name="plus" size={16} />} onClick={() => setOpen(true)}>Registar Decisão</Button>}
       />
+
+      {podeAprovar && pendentes.length > 0 && (
+        <>
+          <h3 style={{ margin: "8px 0 12px" }}>Decisões pendentes de aprovação</h3>
+          <Table columns={pendCols} rows={pendentes} />
+          <h3 style={{ margin: "28px 0 12px" }}>Todas as decisões</h3>
+        </>
+      )}
       <Table columns={columns} rows={rows} />
 
       <Modal open={open} title="Registar Decisão" onClose={() => setOpen(false)}

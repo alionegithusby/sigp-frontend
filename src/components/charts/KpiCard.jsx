@@ -1,9 +1,9 @@
 import "./KpiCard.css";
 
 // tone: neutral | verde | amarelo | vermelho | accent
-export default function KpiCard({ label, value, hint, tone = "neutral", icon }) {
+export default function KpiCard({ label, value, hint, tone = "neutral", icon, title }) {
   return (
-    <div className={`kpi kpi--${tone} card`}>
+    <div className={`kpi kpi--${tone} card`} title={title}>
       <div className="kpi__top">
         <span className="kpi__label eyebrow">{label}</span>
         {icon && <span className="kpi__icon">{icon}</span>}

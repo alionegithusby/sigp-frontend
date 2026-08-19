@@ -5,7 +5,7 @@ import { initials } from "../../utils/format";
 import Icon from "../ui/Icon";
 import "./Topbar.css";
 
-export default function Topbar({ onToggleSidebar, openOccurrences = 0 }) {
+export default function Topbar({ onToggleSidebar }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -20,24 +20,14 @@ export default function Topbar({ onToggleSidebar, openOccurrences = 0 }) {
         <Icon name="menu" />
       </button>
 
-      <div className="topbar__search">
-        <Icon name="search" size={17} />
-        <input placeholder="Pesquisar projectos, tarefas, ocorrências…" aria-label="Pesquisar" />
-      </div>
-
       <div className="topbar__actions">
-        <button className="topbar__icon topbar__bell" aria-label="Notificações">
-          <Icon name="bell" />
-          {openOccurrences > 0 && <span className="topbar__badge">{openOccurrences}</span>}
-        </button>
-
-        <div className="topbar__user">
+        <button className="topbar__user" onClick={() => navigate("/profile")} title="A minha conta">
           <span className="topbar__avatar">{initials(user?.nome)}</span>
           <span className="topbar__userinfo">
             <strong>{user?.nome}</strong>
             <small>{PERFIL_LABEL[user?.perfil]}</small>
           </span>
-        </div>
+        </button>
 
         <button className="topbar__icon" onClick={handleLogout} aria-label="Terminar sessão" title="Terminar sessão">
           <Icon name="logout" />

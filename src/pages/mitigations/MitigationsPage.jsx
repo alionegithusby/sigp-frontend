@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { occurrenceRepository, mitigationRepository, projectRepository, userRepository } from "../../services/repositories";
+import { PERFIS } from "../../constants/roles";
+import { useAuth } from "../../hooks/useAuth";
 import { formatDate } from "../../utils/format";
 import { useToast } from "../../context/ToastContext";
 import PageHeader from "../../components/layout/PageHeader";
@@ -16,6 +18,8 @@ import Icon from "../../components/ui/Icon";
 
 export default function MitigationsPage() {
   const { push } = useToast();
+  const { hasRole } = useAuth();
+  const podeGerir = hasRole([PERFIS.GESTOR]);
   const [occ, setOcc] = useState([]);
   const [mits, setMits] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -54,7 +58,7 @@ export default function MitigationsPage() {
     { key: "descricao", header: "Ocorrência pendente", render: (r) => <strong>{r.descricao}</strong> },
     { key: "projetoId", header: "Projecto", render: (r) => proj(r.projetoId) },
     { key: "gravidade", header: "Gravidade", render: (r) => <Badge tone={r.gravidade === "BAIXA" ? "neutral" : r.gravidade === "MEDIA" ? "amarelo" : "vermelho"}>{r.gravidade}</Badge> },
-    { key: "acao", header: "", align: "right", render: (r) => <Button size="sm" onClick={() => openFor(r)}>Registar Mitigação</Button> },
+    { key: "acao", header: "", align: "right", render: (r) => podeGerir && <Button size="sm" onClick={() => openFor(r)}>Registar Mitigação</Button> },
   ];
 
   const mitCols = [

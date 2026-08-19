@@ -5,11 +5,11 @@ import { APP_NAME } from "../../services/config";
 import Icon from "../ui/Icon";
 import "./Sidebar.css";
 
-export default function Sidebar({ collapsed }) {
+export default function Sidebar({ collapsed, mobileOpen }) {
   const { user } = useAuth();
 
   return (
-    <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""}`}>
+    <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""} ${mobileOpen ? "sidebar--mobile-open" : ""}`}>
       <div className="sidebar__brand">
         <img src="/sonils-logo.png" alt="SONILS" className="sidebar__logo" />
         {!collapsed && (
